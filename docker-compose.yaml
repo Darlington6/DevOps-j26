@@ -1,0 +1,47 @@
+services:
+  # PostgreSQL database service
+  db:
+    # Lightweight PostgreSQL 16 Alpine image
+    image: postgres:16-alpine
+    
+    # Database configuration from .env file
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}           # Database name
+      POSTGRES_USER: ${POSTGRES_USER}       # Database user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Database password
+    
+    # Persist database data using named volume
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    # Expose PostgreSQL on default port
+    ports:
+      - "5432:5432"
+
+  # Django web application service
+  web:
+    # Build from Dockerfile in current directory
+    build: .
+    
+    # Run Django development server
+    command: python manage.py runserver 0.0.0.0:8000
+    
+    # Mount current directory for hot-reload during development
+    volumes:
+      - .:/app
+    
+    # Expose Django on port 8000
+    ports:
+      - "8000:8000"
+    
+    # Database connection string for Django
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    
+    # Ensure database starts before web service
+    depends_on:
+      - db
+
+# Named volume for persistent database storage
+volumes:
+  postgres_data:
