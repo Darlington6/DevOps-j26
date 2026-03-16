@@ -35,6 +35,18 @@ jobs:
       - name: Run black
         run: black --check .
 
+      - name: Build Docker image
+        run: docker build -t my-app:latest .
+
+    # ADD THIS NEW STEP
+      - name: Scan Docker image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-app:latest' # Must match the tag from your build step
+          format: 'table'
+          exit-code: '1' # This is crucial! It fails the step if issues are found.
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH' # Only fail for Critical or High issues
 
   testing:
     runs-on: ubuntu-24.04
